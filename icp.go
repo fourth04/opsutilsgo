@@ -1,4 +1,4 @@
-package opsutils
+package opsutilsgo
 
 import (
 	"encoding/json"

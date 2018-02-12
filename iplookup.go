@@ -1,4 +1,4 @@
-package opsutils
+package opsutilsgo
 
 import (
 	"fmt"
@@ -6,9 +6,9 @@ import (
 )
 
 type IPAcl struct {
-	StartNum, StopNum  uint32
-	StartIP, StopIP    string
-	Category, Customer string
+	StartNum, StopNum uint32
+	StartIP, StopIP   string
+	Info              []string
 }
 
 type IPAclTable []IPAcl
@@ -28,19 +28,26 @@ func (m IPAclTable) Less(i, j int) bool {
 	return m[i].StartNum < m[j].StartNum
 }
 
-func (m *IPAclTable) Init(filepath string) error {
+func (m *IPAclTable) InitByCsv(filepath string) error {
 	content, err := CsvReader(filepath)
 	if err != nil {
 		return err
 	}
 	lines := content[1:]
+	if err := m.Init(lines); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *IPAclTable) Init(lines [][]string) error {
 	for _, line := range lines {
 		ipStartNum, err1 := IPStr2Int(line[0])
 		ipStopNum, err2 := IPStr2Int(line[1])
 		if (err1 != nil) && (err2 != nil) {
 			continue
 		}
-		*m = append(*m, IPAcl{ipStartNum, ipStopNum, line[0], line[1], line[2], line[3]})
+		*m = append(*m, IPAcl{ipStartNum, ipStopNum, line[0], line[1], line})
 	}
 	sort.Sort(*m)
 	return nil
@@ -61,7 +68,7 @@ func (m IPAclTable) IPLookup(ip string) (bool, int, error) {
 
 func TestIPAclTable() {
 	var ipAT IPAclTable
-	ipAT.Init(`D:\workspace\go\workspace\src\demo\ip.merge.csv`)
+	ipAT.InitByCsv(`D:\workspace\go\workspace\src\github.com\fourth04\demo\ip.merge.csv`)
 	ips := []string{
 		"198.2.215.125",
 		"213.155.156.189",
